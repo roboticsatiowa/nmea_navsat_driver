@@ -45,20 +45,17 @@ def main():
 
     Opens a serial device and publishes data from the device as nmea_msgs.msg.Sentence messages.
 
-    :ROS Parameters:
-        - ~port (str)
-            Path of the serial device to open.
-        - ~baud (int)
-            Baud rate to configure the serial device.
+    ROS parameters:
+        ~port (str): Path of the serial device to open.
+        ~baud (int): Baud rate to configure the serial device.
 
-    :ROS Publishers:
-        - nmea_sentence (nmea_msgs.msg.Sentence)
-            Publishes each line from the openserial device as a new message. The header's stamp is
-            set to the rostime when the data is read from the serial device.
+    ROS publishers:
+        nmea_sentence (nmea_msgs.msg.Sentence): Publishes each line from the open serial device as a new
+            message. The header's stamp is set to the rostime when the data is read from the serial device.
     """
     rospy.init_node('nmea_topic_serial_reader')
 
-    nmea_pub = rospy.Publisher("nmea_sentence", Sentence, queue_size=1)
+    nmea_pub = rospy.Publisher("nmea_sentence", Sentence)
 
     serial_port = rospy.get_param('~port', '/dev/ttyUSB0')
     serial_baud = rospy.get_param('~baud', 4800)
@@ -74,14 +71,9 @@ def main():
             sentence = Sentence()
             sentence.header.stamp = rospy.get_rostime()
             sentence.header.frame_id = frame_id
+            sentence.sentence = data
 
-            try:
-                sentence.sentence = data.decode('ascii')
-            except UnicodeError as e:
-                rospy.logwarn("Skipped reading a line from the serial device because it could not be "
-                              "decoded as an ASCII string. The bytes were {0}".format(data))
-            else:
-                nmea_pub.publish(sentence)
+            nmea_pub.publish(sentence)
 
     except rospy.ROSInterruptException:
         GPS.close()  # Close GPS serial port

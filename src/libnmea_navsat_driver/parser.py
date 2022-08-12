@@ -42,9 +42,6 @@ import logging
 logger = logging.getLogger('rosout')
 
 
-field_delimiter_regex = re.compile(r'[,*]')
-
-
 def safe_float(field):
     """Convert  field to a float.
 
@@ -111,9 +108,9 @@ def convert_time(nmea_utc):
     more than 12 hours ahead of the NMEA time.
 
     Args:
-        nmea_utc (str): NMEA UTC time string to convert. The expected format is HHMMSS[.SS] where
+        nmea_utc (str): NMEA UTC time string to convert. The expected format is HHMMSS.SS where
             HH is the number of hours [0,24), MM is the number of minutes [0,60),
-            and SS[.SS] is the number of seconds [0,60) of the time in UTC.
+            and SS.SS is the number of seconds [0,60) of the time in UTC.
 
     Returns:
         tuple(int, int): 2-tuple of (unix seconds, nanoseconds) if the sentence contains valid time.
@@ -128,10 +125,7 @@ def convert_time(nmea_utc):
     hours = int(nmea_utc[0:2])
     minutes = int(nmea_utc[2:4])
     seconds = int(nmea_utc[4:6])
-    nanosecs = 0
-    # If the seconds includes a decimal portion, convert it to nanoseconds
-    if len(nmea_utc) > 7:
-        nanosecs = int(nmea_utc[7:]) * pow(10, 9 - len(nmea_utc[7:]))
+    nanosecs = int(nmea_utc[7:]) * pow(10, 9 - len(nmea_utc[7:]))
 
     # Resolve the ambiguity of day
     day_offset = int((utc_time.hour - hours)/12.0)
@@ -156,7 +150,7 @@ def convert_time_rmc(date_str, time_str):
         tuple(float, float): 2-tuple of (NaN, NaN) if the sentence does not contain valid time.
     """
     # If one of the time fields is empty, return NaN seconds
-    if not date_str[0:6] or not time_str[0:2] or not time_str[2:4] or not time_str[4:6]:
+    if not time_str[0:2] or not time_str[2:4] or not time_str[4:6]:
         return (float('NaN'), float('NaN'))
 
     pc_year = datetime.date.today().year
@@ -283,14 +277,14 @@ def parse_nmea_sentence(nmea_sentence):
         False if the sentence could not be parsed.
     """
     # Check for a valid nmea sentence
-    nmea_sentence = nmea_sentence.strip()  # Cut possible carriage return or new line of NMEA Sentence
+
     if not re.match(
             r'(^\$GP|^\$GN|^\$GL|^\$IN).*\*[0-9A-Fa-f]{2}$', nmea_sentence):
         logger.debug(
             "Regex didn't match, sentence not valid NMEA? Sentence was: %s" %
             repr(nmea_sentence))
         return False
-    fields = [field for field in field_delimiter_regex.split(nmea_sentence)]
+    fields = [field.strip(',') for field in nmea_sentence.split(',')]
 
     # Ignore the $ and talker ID portions (e.g. GP)
     sentence_type = fields[0][3:]

@@ -1,15 +1,7 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 2.8.3)
 project(nmea_navsat_driver)
 
-if (NOT CATKIN_ENABLE_TESTING)
-  find_package(catkin REQUIRED COMPONENTS
-  )
-endif()
-if (CATKIN_ENABLE_TESTING)
-  find_package(catkin REQUIRED COMPONENTS
-    catkin_virtualenv
-  )
-endif()
+find_package(catkin REQUIRED)
 
 catkin_python_setup()
 catkin_package()
@@ -27,28 +19,8 @@ install(DIRECTORY launch/
    FILES_MATCHING PATTERN "*.launch"
 )
 
-install(FILES
-   LICENSE.txt
-   test/requirements.txt
-   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
-
 if (CATKIN_ENABLE_TESTING)
-  catkin_generate_virtualenv(
-    PYTHON_INTERPRETER python3
-  )
-
-  catkin_add_nosetests(
-    test/test_driver.py
-    DEPENDENCIES ${${PROJECT_NAME}_EXPORTED_TARGETS} ${PROJECT_NAME}_generate_virtualenv
-  )
-
-  catkin_install_python(
-    PROGRAMS
-      test/test_driver.py
-    DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-
-  find_package(roslint REQUIRED)
+  find_package(roslint)
   roslint_python()
   roslint_add_test()
 endif()
